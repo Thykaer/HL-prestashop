@@ -1,0 +1,6 @@
+{
+    "require": {
+        "guzzlehttp/guzzle": "~6.0",
+        "heyloyalty/hl-phpclient": "^1.5"
+    }
+}

@@ -1,2 +1,2 @@
 # HL-prestashop
-This is heyloyatlys plugin for prestashop.
+THIS IS CURRENTLY A WORK IN PROGRESS DO NOT USE THIS FOR PRODUCTION!

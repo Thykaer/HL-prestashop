@@ -1,0 +1,27 @@
+.panel{
+	background-color: #EBEDF4;
+	border: 1px solid #CCCED7;
+	color: #585A69;
+	font-size: 1.1em;
+	margin: 0 0 15px;
+	padding: 1em;
+}
+
+.form-group{
+	margin-bottom: 15px;
+}
+
+select{
+	width: 100%;
+	padding: 10px;
+}
+
+.panel-heading{
+	background: #EBEDF4;
+	border: 1px solid #CCCED7;
+	font-weight: 700;
+    display: inline-block;
+    margin: -25px 0 0;
+	padding: .2em .5em;
+	text-align: left;
+}
