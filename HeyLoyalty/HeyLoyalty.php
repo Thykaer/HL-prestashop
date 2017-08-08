@@ -6,9 +6,11 @@ if (!defined('_PS_VERSION_')) {
 include(dirname(__FILE__) . '/csv.php');
 include(dirname(__FILE__) . '/API/api.php');
 
-class HeyLoyalty extends Module{
+class HeyLoyalty extends Module
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->name = 'HeyLoyalty';
         $this->tab = 'others';
         $this->version = '1.0.0';
@@ -33,7 +35,8 @@ class HeyLoyalty extends Module{
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
     }
 
-    public function install(){
+    public function install()
+    {
         if (Shop::isFeatureActive())
             Shop::setContext(Shop::CONTEXT_ALL);
 
@@ -47,7 +50,8 @@ class HeyLoyalty extends Module{
         return true;
     }
 
-    public function uninstall(){
+    public function uninstall()
+    {
         if (!parent::uninstall() ||
             !$this->unregisterHook('actionPaymentConfirmation') ||
             !$this->unregisterHook('actionObjectCustomerAddAfter')) {
@@ -67,8 +71,7 @@ class HeyLoyalty extends Module{
                 $api = new HeyLoyaltyAPI($this->api_key, $this->api_secret);
                 $response = $api->add_member($this->list_id, $HLCustomer);
             }
-        } catch(Exception $e) {
-        }
+        } catch(Exception $e) {}
     }
 
     public function hookActionPaymentConfirmation($params)
@@ -133,9 +136,10 @@ class HeyLoyalty extends Module{
         return $member;
     }
 
-    protected function convertToReadableDate($date){
+    protected function convertToReadableDate($date)
+    {
         $time = strtotime($date);
-        if($time <= 0){
+        if ($time <= 0) {
             return false;
         }
         return date('Y-m-d', $time);
@@ -298,8 +302,8 @@ class HeyLoyalty extends Module{
         ];
     }
 
-    public function generateData($start, $stop, $return = false){
-
+    public function generateData($start, $stop, $return = false)
+    {
         $excel_data = [];
         $emails = [];
         $customers = Customer::getCustomers();
@@ -367,7 +371,6 @@ class HeyLoyalty extends Module{
         }
 
         file_put_contents(dirname(__FILE__) . '/data/data-' . $start . '-' . $stop . '.json', json_encode($excel_data));
-
         if (!$return) {
             echo json_encode([
                     'start' => $start,
@@ -384,15 +387,11 @@ class HeyLoyalty extends Module{
         }
     }
 
-    public function getExcelData($id_list = '', $only_subscribed = false){
-
+    public function getExcelData($id_list = '', $only_subscribed = false)
+    {
         $api = new HeyLoyaltyAPI($this->api_key, $this->api_secret);
-
         $dir = dirname(__FILE__) . '/data';
-
         $files = scandir($dir);
-
-
         $data = [
             [
                 'reference',
@@ -427,385 +426,226 @@ class HeyLoyalty extends Module{
             ]
         ];
 
-
-		foreach($files as $file){
-
-			if($file == '.' || $file == '..')
-
-				continue;
-
-
-
-			$append = json_decode(file_get_contents($dir . '/' . $file));
-
-
-
-			$range = str_replace(array('data-', '.json'), '', $file);
-
-
-
-			$range = explode('-', $range);
-
-
-
-			$filtered = array();
-
-			if(!empty($id_list) || $only_subscribed){
-
-				foreach($append as $filtering){
-
-					if($only_subscribed){
-
-						if($filtering[27] == 'No'){
-
-						}else{
-
-							$filtered[] = $filtering;
-
-						}
-
-					}else{
-
-						$filtered[] = $filtering;
-
-					}
-
-				}
-
-			}
-
-
-
-
-
-			if(!empty($id_list) || $only_subscribed){
-
-				$data = array_merge($data, $filtered);
-
-			}else{
-
-				$data = array_merge($data, $append);
-
-			}
-
-		}
-
-
-
-		if(isset($_REQUEST['debug'])){
-
-			print_r($this->ExportedCustomersByID);
-
-
-
-			exit;
-
-		}
-
-
-
-		return $data;
-
-	}
-
-
-
-	/***************** Excel Functions Start *******************/
-
-	protected function addSubHeaderStyling(&$activeSheet, $col, $row){
-
-		$cell = $col . $row;
-
-
-
-		$activeSheet->getStyle($cell . ':' . $cell)->applyFromArray(
-
-			array(
-
-				'fill' => array(
-
-					'type' => PHPExcel_Style_Fill::FILL_SOLID,
-
-					'color' => array('rgb' => 'CCCCCC')
-
-				),
-
-
-
-				'alignment' => array(
-
-					'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
-
-					'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER
-
-				),
-
-
-
-				'font'  => array(
-
-					'bold'  => false,
-
-
-
-					'color' => array('rgb' => '000000'),
-
-
-
-					'size'  => 11
-
-				)
-
-			)
-
-		);
-
-
-
-		$activeSheet->getColumnDimension($col)->setAutoSize(true);
-
-
-
-		$activeSheet->getRowDimension($row)->setRowHeight(18);
-
-	}
-
-
-
-	protected function makeExcel($excel_data){
-
-
-
-		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-
-		header('Content-Disposition: attachment;filename="HeyLoyalty-Export.xlsx"');
-
-		header('Cache-Control: max-age=0');
-
-
-
-		csvmakeExcel($excel_data);
-
-
-
-		exit;
-
-	}
-
-
-
-	/***************** Excel Functions End *******************/
-
-
-
-
-
-	/***************** CSV Functions Start *******************/
-
-	protected function makeCSV($excel_data){
-
-		header('Content-Type: text/csv; charset=UTF-8');
-
-		header('Content-Disposition: attachment; filename=HeyLoyalty-Export.csv');
-
-
-
-		$fp = fopen('php://output', 'w');
-
-
-
-		fwrite($fp, chr(239) . chr(187) . chr(191));
-
-
-
-		foreach($excel_data as $line){
-
-			$value = $line;
-
-
-
-			fputcsv($fp, $value, ";");
-
-		}
-
-
-
-		fclose($fp);
-
-
-
-		exit;
-
-	}
-
-
-
-	/***************** CSV Functions End *******************/
-
-
-
-
+        foreach ($files as $file) {
+            if ($file == '.' || $file == '..') {
+                continue;
+            }
+            $append = json_decode(file_get_contents($dir . '/' . $file));
+            $range = str_replace(array('data-', '.json'), '', $file);
+            $range = explode('-', $range);
+            $filtered = array();
+            if (!empty($id_list) || $only_subscribed) {
+                foreach ($append as $filtering) {
+                    if ($only_subscribed) {
+                        if ($filtering[27] !== 'No') {
+                            $filtered[] = $filtering;
+                        }
+                    } else {
+                        $filtered[] = $filtering;
+                    }
+                }
+            }
+            if (!empty($id_list) || $only_subscribed) {
+                $data = array_merge($data, $filtered);
+            } else {
+                $data = array_merge($data, $append);
+            }
+        }
+        if (isset($_REQUEST['debug'])) {
+            print_r($this->ExportedCustomersByID);
+            exit;
+        }
+        return $data;
+    }
+
+    protected function addSubHeaderStyling(&$activeSheet, $col, $row)
+    {
+        $cell = $col . $row;
+        $activeSheet->getStyle($cell . ':' . $cell)->applyFromArray(
+            array(
+                'fill' => array(
+                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                    'color' => array('rgb' => 'CCCCCC')
+                ),
+                'alignment' => array(
+                    'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+                    'vertical' => PHPExcel_Style_Alignment::VERTICAL_CENTER
+                ),
+                'font'  => array(
+                    'bold'  => false,
+                    'color' => array('rgb' => '000000'),
+                    'size'  => 11
+                )
+            )
+        );
+        $activeSheet->getColumnDimension($col)->setAutoSize(true);
+        $activeSheet->getRowDimension($row)->setRowHeight(18);
+    }
+
+    protected function makeExcel($excel_data)
+    {
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="HeyLoyalty-Export.xlsx"');
+        header('Cache-Control: max-age=0');
+        csvmakeExcel($excel_data);
+        exit;
+    }
+
+    protected function makeCSV($excel_data)
+    {
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename=HeyLoyalty-Export.csv');
+        $fp = fopen('php://output', 'w');
+        fwrite($fp, chr(239) . chr(187) . chr(191));
+        foreach ($excel_data as $line) {
+            $value = $line;
+            fputcsv($fp, $value, ";");
+        }
+        fclose($fp);
+        exit;
+    }
 
     public function getContent()
     {
         $output = '';
         $is_running = Configuration::get('HeyLoyalty_running_import');
-        if($is_running == $_SERVER['REMOTE_ADDR']){
+        if ($is_running == $_SERVER['REMOTE_ADDR']) {
             Configuration::updateValue('HeyLoyalty_running_import', '0');
         }
-        if(Tools::getValue('generateData')){
+        if (Tools::getValue('generateData')) {
             $start = Tools::getValue('start');
             $stop  = Tools::getValue('stop');
             $this->generateData($start, $stop);
             exit;
         }
         $only_subscribed = false;
-        if($_REQUEST['only_subscribed'] == 1){
+        if ($_REQUEST['only_subscribed'] == 1) {
             $only_subscribed = true;
         }
-        if (Tools::getValue('export'.$this->name.'CSV')){
+        if (Tools::getValue('export'.$this->name.'CSV')) {
             $excel_data = $this->getExcelData('', $only_subscribed);
             $this->makeCSV($excel_data);
-        }elseif(Tools::getValue('export'.$this->name.'Excel')){
+        } elseif (Tools::getValue('export'.$this->name.'Excel')) {
             $excel_data = $this->getExcelData('', $only_subscribed);
             $this->makeExcel($excel_data);
-        }elseif(isset($_POST['submitHeyLoyaltyAuth'])){
+        } elseif (isset($_POST['submitHeyLoyaltyAuth'])) {
             $api_key = Tools::getValue('api_key');
-            if(isset($_POST['api_key'])){
+            if (isset($_POST['api_key'])) {
                 Configuration::updateValue('HeyLoyalty_api_key', $api_key);
             }
             $api_secret = Tools::getValue('api_secret');
-            if(isset($_POST['api_secret'])){
+            if (isset($_POST['api_secret'])) {
                 Configuration::updateValue('HeyLoyalty_api_secret', $api_secret);
             }
             if (isset($_POST['changeList'])) {
                 $listId = Tools::getValue('changeList');
                 Configuration::updateValue('Heyloyalty_list_id', $listId);
             }
-            if($_POST['only_subscribed'] == 1){
+            if ($_POST['only_subscribed'] == 1) {
                 Configuration::updateValue('HeyLoyalty_only_subscribed', $_POST['only_subscribed']);
-            }else{
+            } else {
                 Configuration::updateValue('HeyLoyalty_only_subscribed', 0);
             }
         }
         return $output.$this->displayForm();
     }
 
-	public function displayForm(){
+    public function displayForm()
+    {
+        $this->api_key = Configuration::get('HeyLoyalty_api_key');
+        $this->api_secret = Configuration::get('HeyLoyalty_api_secret');
+        $this->only_subscribed = Configuration::get('HeyLoyalty_only_subscribed');
+        $domain = $this->context->shop->domain;
+        $physical_uri = $this->context->shop->physical_uri;
+        $virtual_uri = $this->context->shop->virtual_uri;
+        $url = $domain . $physical_uri . $virtual_uri;
 
-		$this->api_key = Configuration::get('HeyLoyalty_api_key');
+        // Get default language
+        $default_lang = (int)Configuration::get('PS_LANG_DEFAULT');
+        if (version_compare($this->ps_versions_compliancy['max'], '1.6', '<')) {
+            $output .= '<link rel="stylesheet" href="//' . $url . 'modules/HeyLoyalty/css/backend.v15.css?timestamp=' . time() . '"/>';
+        }
 
-		$this->api_secret = Configuration::get('HeyLoyalty_api_secret');
+        $output .= '<form id="configuration_form" class="defaultForm form-horizontal HeyLoyalty" action="" method="post" enctype="multipart/form-data" novalidate="">';
+            $output .= '<div class="panel">';
+                $output .= '<div class="panel-heading">' . $this->l('API Authentication') . '</div>';
+                $output .= '<div class="form-wrapper clearfix">'; //panel-footer
+                    $output .= '<div class="form-group">';
+                        $output .= '<label class="control-label col-lg-3 required">';
+                            $output .= $this->l('API Key');
+                        $output .= '</label>';
+                        $output .= '<div class="col-lg-9">';
+                            $output .= '<input type="text" id="api_key" name="api_key" class="" value="' . $this->api_key . '" required="required">';
+                        $output .= '</div>';
+                    $output .= '</div>';
+                    $output .= '<div class="form-group">';
+                        $output .= '<label class="control-label col-lg-3 required">';
+                            $output .= $this->l('API Secret');
+                        $output .= '</label>';
+                        $output .= '<div class="col-lg-9">';
+                            $output .= '<input type="text" id="api_secret" name="api_secret" class="" value="' . $this->api_secret . '" required="required">';
+                        $output .= '</div>';
+                    $output .= '</div>';
+                    $output .= '<div class="form-group">';
+                        $output .= '<label class="control-label col-lg-3 required">';
+                            $output .= $this->l('Only Import Subscribed Customers');
+                        $output .= '</label>';
+                        $output .= '<div class="col-lg-9">';
+                            $output .= '<input ' . (($this->only_subscribed) ? 'checked="checked"' : '') . ' type="checkbox" id="only_subscribed" name="only_subscribed" value="1">';
+                        $output .= '</div>';
+                    $output .= '</div>';
+                $output .= '</div>';
+                $output .= '<div class="panel-footer clearfix">'; //panel-footer
+                    $output .= '<button style="margin-right:10px;" type="submit" value="1" name="submitHeyLoyaltyAuth" class="btn btn-default pull-right">';
+                        $output .= '<i class="process-icon-save"></i> ' . $this->l('Save');
+                    $output .= '</button>';
+                $output .= '</div>';
+            $output .= '</div>';
 
-		$this->only_subscribed = Configuration::get('HeyLoyalty_only_subscribed');
+            if (!empty($this->api_key) && !empty($this->api_secret)) {
+                $api = new HeyLoyaltyAPI($this->api_key, $this->api_secret);
 
+                $output .= '<p style="margin-bottom:15px;">';
+                    $output .= '<h4>Choose your import list</h4>';
+                    $output .= '<select style="display:inline-block;width: 200px;" name="changeList" id="changeList">';
+                        $output .= '<option value="">Please select a list</option>';
 
+                        $lists = $api->lists();
+                        foreach ($lists as $list) {
+                            $output .= '<option '. (($_COOKIE['changeList'] == $list['id']) ? 'selected="selected"' : '') . ' value="' . $list['id'] . '">' . $list['name'] . '</option>';
+                        }
 
-		$domain = $this->context->shop->domain;
-
-		$physical_uri = $this->context->shop->physical_uri;
-
-		$virtual_uri = $this->context->shop->virtual_uri;
-
-
-
-		$url = $domain . $physical_uri . $virtual_uri;
-
-
-
-	    // Get default language
-
-	    $default_lang = (int)Configuration::get('PS_LANG_DEFAULT');
-
-
-
-		if(version_compare($this->ps_versions_compliancy['max'], '1.6', '<')){
-
-			$output .= '<link rel="stylesheet" href="//' . $url . 'modules/HeyLoyalty/css/backend.v15.css?timestamp=' . time() . '"/>';
-
-		}
-
-
-	    $output .= '<form id="configuration_form" class="defaultForm form-horizontal HeyLoyalty" action="" method="post" enctype="multipart/form-data" novalidate="">';
-		    $output .= '<div class="panel">';
-		    	$output .= '<div class="panel-heading">' . $this->l('API Authentication') . '</div>';
-				$output .= '<div class="form-wrapper clearfix">'; //panel-footer
-					$output .= '<div class="form-group">';
-						$output .= '<label class="control-label col-lg-3 required">';
-							$output .= $this->l('API Key');
-						$output .= '</label>';
-						$output .= '<div class="col-lg-9">';
-							$output .= '<input type="text" id="api_key" name="api_key" class="" value="' . $this->api_key . '" required="required">';
-						$output .= '</div>';
-					$output .= '</div>';
-					$output .= '<div class="form-group">';
-						$output .= '<label class="control-label col-lg-3 required">';
-							$output .= $this->l('API Secret');
-						$output .= '</label>';
-						$output .= '<div class="col-lg-9">';
-							$output .= '<input type="text" id="api_secret" name="api_secret" class="" value="' . $this->api_secret . '" required="required">';
-						$output .= '</div>';
-					$output .= '</div>';
-					$output .= '<div class="form-group">';
-						$output .= '<label class="control-label col-lg-3 required">';
-							$output .= $this->l('Only Import Subscribed Customers');
-						$output .= '</label>';
-						$output .= '<div class="col-lg-9">';
-							$output .= '<input ' . (($this->only_subscribed) ? 'checked="checked"' : '') . ' type="checkbox" id="only_subscribed" name="only_subscribed" value="1">';
-						$output .= '</div>';
-					$output .= '</div>';
-				$output .= '</div>';
-				$output .= '<div class="panel-footer clearfix">'; //panel-footer
-					$output .= '<button style="margin-right:10px;" type="submit" value="1" name="submitHeyLoyaltyAuth" class="btn btn-default pull-right">';
-						$output .= '<i class="process-icon-save"></i> ' . $this->l('Save');
-					$output .= '</button>';
-				$output .= '</div>';
-			$output .= '</div>';
-
-			if(!empty($this->api_key) && !empty($this->api_secret)){
-				$api = new HeyLoyaltyAPI($this->api_key, $this->api_secret);
-
-				$output .= '<p style="margin-bottom:15px;">';
-					$output .= '<h4>Choose your import list</h4>';
-					$output .= '<select style="display:inline-block;width: 200px;" name="changeList" id="changeList">';
-						$output .= '<option value="">Please select a list</option>';
-
-						$lists = $api->lists();
-						foreach($lists as $list){
-							$output .= '<option '. (($_COOKIE['changeList'] == $list['id']) ? 'selected="selected"' : '') . ' value="' . $list['id'] . '">' . $list['name'] . '</option>';
-						}
-
-					$output .= '</select> ';
-				$output .= '</p>';
-			    $output .= '<div class="panel" id="fieldset_0">';
-					$output .= '<div class="clearfix">'; //panel-footer
-						$output .= '<progress style="display:none;width:100%;height:24px;margin-bottom:15px;" value="0" max="100" class="update-progressbar"></progress>';
-						$output .= '<div style="display:none;
-									    background-color: rgba(0,0,0,0.1);
-									    border: 1px solid;
-									    padding: 10px 20px;
-									    margin-bottom: 20px;
-									    max-height:200px;
-									    overflow-y:auto;" id="importProgress"></div>';
-						$output .= '<button type="submit" value="1" id="exportHeyLoyaltyCSV" name="exportHeyLoyaltyCSV" class="btn btn-default pull-right">';
-							$output .= '<i class="process-icon-save"></i> ' . $this->l('Download CSV');
-						$output .= '</button>';
-						$output .= '<button style="margin-right:10px;" type="submit" value="1" id="exportHeyLoyaltyExcel" name="exportHeyLoyaltyExcel" class="btn btn-default pull-right">';
-							$output .= '<i class="process-icon-save"></i> ' . $this->l('Download Excel');
-						$output .= '</button>';
-					$output .= '</div>';
-				$output .= '</div>';
-			    $output .= '<div class="panel">';
-			    	$output .= '<div class="panel-heading">' . $this->l('Cron Jobs') . '</div>';
-				$output .= '</div>';
-			}
-	    $output .= '</form>';
-		$output .= '<script>
-			if(typeof baseDir == \'undefined\'){
-				var baseDir = \'' . $physical_uri . $virtual_uri . '\';
-			}
-		</script>';
-		$output .= '<script src="//' . $url . 'modules/HeyLoyalty/js/backend.js?timestamp=' . time() . '"></script>';
-		return $output;
-	}
+                    $output .= '</select> ';
+                $output .= '</p>';
+                $output .= '<div class="panel" id="fieldset_0">';
+                    $output .= '<div class="clearfix">'; //panel-footer
+                        $output .= '<progress style="display:none;width:100%;height:24px;margin-bottom:15px;" value="0" max="100" class="update-progressbar"></progress>';
+                        $output .= '<div style="display:none;
+                                        background-color: rgba(0,0,0,0.1);
+                                        border: 1px solid;
+                                        padding: 10px 20px;
+                                        margin-bottom: 20px;
+                                        max-height:200px;
+                                        overflow-y:auto;" id="importProgress"></div>';
+                                        $output .= '<button type="submit" value="1" id="exportHeyLoyaltyCSV" name="exportHeyLoyaltyCSV" class="btn btn-default pull-right">';
+                                        $output .= '<i class="process-icon-save"></i> ' . $this->l('Download CSV');
+                                        $output .= '</button>';
+                                        $output .= '<button style="margin-right:10px;" type="submit" value="1" id="exportHeyLoyaltyExcel" name="exportHeyLoyaltyExcel" class="btn btn-default pull-right">';
+                                        $output .= '<i class="process-icon-save"></i> ' . $this->l('Download Excel');
+                                        $output .= '</button>';
+                                        $output .= '</div>';
+                                        $output .= '</div>';
+                                        $output .= '<div class="panel">';
+                                        $output .= '<div class="panel-heading">' . $this->l('Cron Jobs') . '</div>';
+                                        $output .= '</div>';
+            }
+            $output .= '</form>';
+            $output .= '<script>
+                if(typeof baseDir == \'undefined\'){
+                    var baseDir = \'' . $physical_uri . $virtual_uri . '\';
+    }
+        </script>';
+        $output .= '<script src="//' . $url . 'modules/HeyLoyalty/js/backend.js?timestamp=' . time() . '"></script>';
+        return $output;
+    }
 }
