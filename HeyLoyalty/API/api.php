@@ -13,16 +13,16 @@ class HeyLoyaltyAPI
         ];
     }
 
-    public function lists()
+    public function getLists()
     {
-        $response = $this->callHL('GET', '/loyalty/v1/lists/');
-        return json_decode($respose['response'], true);
+        $response = $this->callHL('GET', 'https://api.heyloyalty.com/loyalty/v1/lists/');
+        return json_decode($response['response'], true);
     }
 
-    public function add_member($listId, $params)
+    public function addMember($listId, $params)
     {
         return $this->callHL('POST',
-            'https://api.heyloyalty.com/loyalty/v1/lists/' . $listId . '/members/',
+            'https://api.heyloyalty.com/loyalty/v1/lists/' . $listId . '/members',
             $params);
     }
 
@@ -30,6 +30,7 @@ class HeyLoyaltyAPI
     {
         $filter = ['filter' => ['email' => ['eq' => [$email]]]];
         $response = $this->callHL(
+            'GET',
             'https://api.heyloyalty.com/loyalty/v1/lists/' . $listId . '/members',
             $filter);
         return json_decode($response['response'], true);
@@ -43,7 +44,7 @@ class HeyLoyaltyAPI
             $member);
     }
 
-    protected function callHL($requestType, $url, $postFields)
+    protected function callHL($requestType, $url, $postFields=[])
     {
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -63,12 +64,12 @@ class HeyLoyaltyAPI
             case 'POST':
                 curl_setopt($curl, CURLOPT_URL, $url);
                 curl_setopt($curl, CURLOPT_POST, true);
-                curl_setopt($curl,CURLOPT_SAFE_UPLOAD,false);
+                curl_setopt($curl, CURLOPT_SAFE_UPLOAD,false);
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $postFields);
                 break;
         }
         curl_setopt($curl, CURLOPT_MAXREDIRS, 10);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 10);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $this->headers);
         $response['response'] = curl_exec($curl);
         if (curl_errno($curl)) {

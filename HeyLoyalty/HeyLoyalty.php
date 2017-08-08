@@ -69,7 +69,7 @@ class HeyLoyalty extends Module
                 $orderData = $this->getOrderData($customer);
                 $HLCustomer = $this->getHLCustomer($customerData, $orderData, $customer);
                 $api = new HeyLoyaltyAPI($this->api_key, $this->api_secret);
-                $response = $api->add_member($this->list_id, $HLCustomer);
+                $response = $api->addMember($this->list_id, $HLCustomer);
             }
         } catch(Exception $e) {}
     }
@@ -85,11 +85,12 @@ class HeyLoyalty extends Module
                 $customerData = $this->getCustomerData($customer);
                 $orderData = $this->getOrderData($customer);
                 $HLCustomer = $this->getHLCustomer($customerData, $orderData, $customer);
+                $api->updateMember($member['members'][0]['id'], $this->list_id, $HLCustomer);
             } elseif ($customer->newsletter) {
                 $customerData = $this->getCustomerData($customer);
                 $orderData = $this->getOrderData($customer);
                 $HLCustomer = $this->getHLCustomer($customerData, $orderData, $customer);
-                $api->add_member($this->list_id, $HLCustomer);
+                $api->addMember($this->list_id, $HLCustomer);
             }
         } catch(Exception $e) {}
     }
@@ -570,6 +571,21 @@ class HeyLoyalty extends Module
             $output .= '<div class="panel">';
                 $output .= '<div class="panel-heading">' . $this->l('API Authentication') . '</div>';
                 $output .= '<div class="form-wrapper clearfix">'; //panel-footer
+                    $langs = Language::getLanguages();
+                    $currencies = Currency::getCurrencies();
+                    $base = '//' . $this->context->shop->domain . __PS_BASE_URI__;
+                    foreach ($langs as $lang){
+                        if ($lang['id_shop'] != $this->context->shop->id) {
+                            continue;
+                        }
+                        foreach ($currencies as $cur) {
+                            if ($cur['id_shop'] != $this->context->shop->id) {
+                                continue;
+                            }
+                            $output .= '<li><strong>'.$this->l('Export in').' <span style="color:#268CCD">'.$lang['name'].'</span>, with prices in <span style="color:#268CCD">'.$cur['name'].'</span> : </strong><br />
+                                <a href="'.$base.'modules/'.$this->name.'/feed/?lang='.$lang['iso_code'].'&amp;currency='.$cur['iso_code'].'" >http:'.$base.'modules/'.$this->name.'/feed/?lang='.$lang['iso_code'].'&amp;currency='.$cur['iso_code'].'</a></li>';
+                        }
+                    }
                     $output .= '<div class="form-group">';
                         $output .= '<label class="control-label col-lg-3 required">';
                             $output .= $this->l('API Key');
@@ -610,7 +626,7 @@ class HeyLoyalty extends Module
                     $output .= '<select style="display:inline-block;width: 200px;" name="changeList" id="changeList">';
                         $output .= '<option value="">Please select a list</option>';
 
-                        $lists = $api->lists();
+                        $lists = $api->getLists();
                         foreach ($lists as $list) {
                             $output .= '<option '. (($_COOKIE['changeList'] == $list['id']) ? 'selected="selected"' : '') . ' value="' . $list['id'] . '">' . $list['name'] . '</option>';
                         }
