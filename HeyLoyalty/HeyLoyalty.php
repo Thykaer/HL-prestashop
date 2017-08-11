@@ -569,28 +569,14 @@ class HeyLoyalty extends Module
 
         $output .= '<form id="configuration_form" class="defaultForm form-horizontal HeyLoyalty" action="" method="post" enctype="multipart/form-data" novalidate="">';
             $output .= '<div class="panel">';
-                $output .= '<div class="panel-heading">' . $this->l('API Authentication') . '</div>';
-                $output .= '<div class="form-wrapper clearfix">'; //panel-footer
-                    $langs = Language::getLanguages();
-                    $currencies = Currency::getCurrencies();
-                    $base = '//' . $this->context->shop->domain . __PS_BASE_URI__;
-                    foreach ($langs as $lang){
-                        if ($lang['id_shop'] != $this->context->shop->id) {
-                            continue;
-                        }
-                        foreach ($currencies as $cur) {
-                            if ($cur['id_shop'] != $this->context->shop->id) {
-                                continue;
-                            }
-                            $output .= '<li><strong>'.$this->l('Export in').' <span style="color:#268CCD">'.$lang['name'].'</span>, with prices in <span style="color:#268CCD">'.$cur['name'].'</span> : </strong><br />
-                                <a href="'.$base.'modules/'.$this->name.'/feed/?lang='.$lang['iso_code'].'&amp;currency='.$cur['iso_code'].'" >http:'.$base.'modules/'.$this->name.'/feed/?lang='.$lang['iso_code'].'&amp;currency='.$cur['iso_code'].'</a></li>';
-                        }
-                    }
+                $output .= '<div class="panel-heading">' . $this->l('3 Steps and your HeyLoyalty integration is up and running.') . '</div>';
+                $output .= '<div class="form-wrapper clearfix">';
+                    $output .= '<p> First insert your HeyLoyalty API key and API secret. (Press save when ready for next step)</p>';
                     $output .= '<div class="form-group">';
                         $output .= '<label class="control-label col-lg-3 required">';
                             $output .= $this->l('API Key');
                         $output .= '</label>';
-                        $output .= '<div class="col-lg-9">';
+                        $output .= '<div class="col-lg-3">';
                             $output .= '<input type="text" id="api_key" name="api_key" class="" value="' . $this->api_key . '" required="required">';
                         $output .= '</div>';
                     $output .= '</div>';
@@ -598,64 +584,74 @@ class HeyLoyalty extends Module
                         $output .= '<label class="control-label col-lg-3 required">';
                             $output .= $this->l('API Secret');
                         $output .= '</label>';
-                        $output .= '<div class="col-lg-9">';
+                        $output .= '<div class="col-lg-3">';
                             $output .= '<input type="text" id="api_secret" name="api_secret" class="" value="' . $this->api_secret . '" required="required">';
                         $output .= '</div>';
                     $output .= '</div>';
-                    $output .= '<div class="form-group">';
-                        $output .= '<label class="control-label col-lg-3 required">';
-                            $output .= $this->l('Only Import Subscribed Customers');
-                        $output .= '</label>';
-                        $output .= '<div class="col-lg-9">';
-                            $output .= '<input ' . (($this->only_subscribed) ? 'checked="checked"' : '') . ' type="checkbox" id="only_subscribed" name="only_subscribed" value="1">';
-                        $output .= '</div>';
-                    $output .= '</div>';
-                $output .= '</div>';
-                $output .= '<div class="panel-footer clearfix">'; //panel-footer
-                    $output .= '<button style="margin-right:10px;" type="submit" value="1" name="submitHeyLoyaltyAuth" class="btn btn-default pull-right">';
-                        $output .= '<i class="process-icon-save"></i> ' . $this->l('Save');
-                    $output .= '</button>';
-                $output .= '</div>';
-            $output .= '</div>';
-
             if (!empty($this->api_key) && !empty($this->api_secret)) {
                 $api = new HeyLoyaltyAPI($this->api_key, $this->api_secret);
-
-                $output .= '<p style="margin-bottom:15px;">';
-                    $output .= '<h4>Choose your import list</h4>';
-                    $output .= '<select style="display:inline-block;width: 200px;" name="changeList" id="changeList">';
-                        $output .= '<option value="">Please select a list</option>';
-
-                        $lists = $api->getLists();
-                        foreach ($lists as $list) {
-                            $output .= '<option '. (($_COOKIE['changeList'] == $list['id']) ? 'selected="selected"' : '') . ' value="' . $list['id'] . '">' . $list['name'] . '</option>';
-                        }
-
-                    $output .= '</select> ';
-                $output .= '</p>';
+                $lists = $api->getLists();
+                if (!empty($lists)) {
+                    $output .= '<p> Next choose which list you want new members synced to: </p>';
+                    $output .= '<div class="form-group">';
+                        $output .= '<label class="control-label col-lg-3 required">';
+                            $output .= 'List';
+                        $output .= '</label>';
+                        $output .= '<div class="col-lg-3">';
+                            $output .= '<select style="display:inline-block;width: 200px;" name="changeList" id="changeList">';
+                                $output .= '<option value="">Please select a list</option>';
+                                foreach ($lists as $list) {
+                                    $output .= '<option '. (($_COOKIE['changeList'] == $list['id']) ? 'selected="selected"' : '') . ' value="' . $list['id'] . '">' . $list['name'] . '</option>';
+                                }
+                            $output .= '</select> ';
+                        $output .= '</div>';
+                    $output .= '</div>';
+                }
+            }
+                $output .= '<div class="form-group">';
+                    $output .= '<button style="margin-right:10px;" type="submit" value="1" name="submitHeyLoyaltyAuth" class="btn btn-default pull-right">';
+                       $output .= '<i class="process-icon-save"></i> ' . $this->l('Save');
+                    $output .= '</button>';
+                $output .= '</div>';
                 $output .= '<div class="panel" id="fieldset_0">';
                     $output .= '<div class="clearfix">'; //panel-footer
                         $output .= '<progress style="display:none;width:100%;height:24px;margin-bottom:15px;" value="0" max="100" class="update-progressbar"></progress>';
-                        $output .= '<div style="display:none;
-                                        background-color: rgba(0,0,0,0.1);
-                                        border: 1px solid;
-                                        padding: 10px 20px;
-                                        margin-bottom: 20px;
-                                        max-height:200px;
-                                        overflow-y:auto;" id="importProgress"></div>';
-                                        $output .= '<button type="submit" value="1" id="exportHeyLoyaltyCSV" name="exportHeyLoyaltyCSV" class="btn btn-default pull-right">';
-                                        $output .= '<i class="process-icon-save"></i> ' . $this->l('Download CSV');
-                                        $output .= '</button>';
-                                        $output .= '<button style="margin-right:10px;" type="submit" value="1" id="exportHeyLoyaltyExcel" name="exportHeyLoyaltyExcel" class="btn btn-default pull-right">';
-                                        $output .= '<i class="process-icon-save"></i> ' . $this->l('Download Excel');
-                                        $output .= '</button>';
-                                        $output .= '</div>';
-                                        $output .= '</div>';
-                                        $output .= '<div class="panel">';
-                                        $output .= '<div class="panel-heading">' . $this->l('Cron Jobs') . '</div>';
-                                        $output .= '</div>';
-            }
+                            $output .= '<div style="display:none;
+                            background-color: rgba(0,0,0,0.1);
+                            border: 1px solid;
+                            padding: 10px 20px;
+                            margin-bottom: 20px;
+                            max-height:200px;
+                            overflow-y:auto;" id="importProgress"></div>';
+                                $output .= '<button type="submit" value="1" id="exportHeyLoyaltyCSV" name="exportHeyLoyaltyCSV" class="btn btn-default pull-right">';
+                                    $output .= '<i class="process-icon-save"></i> ' . $this->l('Download CSV');
+                                $output .= '</button>';
+                                $output .= '<button style="margin-right:10px;" type="submit" value="1" id="exportHeyLoyaltyExcel" name="exportHeyLoyaltyExcel" class="btn btn-default pull-right">';
+                                    $output .= '<i class="process-icon-save"></i> ' . $this->l('Download Excel');
+                                $output .= '</button>';
+                            $output .= '</div>';
+                        $output .= '</div>';
+                    $output .= '</div>';
+                $output .= '</div>';
             $output .= '</form>';
+            if (!empty($this->api_key) && !empty($this->api_secret)) {
+                $langs = Language::getLanguages();
+                $currencies = Currency::getCurrencies();
+                $base = '//' . $this->context->shop->domain . __PS_BASE_URI__;
+                foreach ($langs as $lang){
+                    if ($lang['id_shop'] != $this->context->shop->id) {
+                        continue;
+                    }
+                    foreach ($currencies as $cur) {
+                        if ($cur['id_shop'] != $this->context->shop->id) {
+                            continue;
+                        }
+                        $output .= '<li><strong>'.$this->l('Export in').' <span style="color:#268CCD">'.$lang['name'].'</span>, with prices in <span style="color:#268CCD">'.$cur['name'].'</span> : </strong><br />
+                            <a href="'.$base.'modules/'.$this->name.'/feed/?lang='.$lang['iso_code'].'&amp;currency='.$cur['iso_code'].'" >http:'.$base.'modules/'.$this->name.'/feed/?lang='.$lang['iso_code'].'&amp;currency='.$cur['iso_code'].'</a></li>';
+                    }
+                }
+            }
+
             $output .= '<script>
                 if(typeof baseDir == \'undefined\'){
                     var baseDir = \'' . $physical_uri . $virtual_uri . '\';
