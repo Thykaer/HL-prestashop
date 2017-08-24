@@ -3,26 +3,28 @@ class HeyLoyaltyAPI
 {
     public $client;
     protected $headers = [];
+    protected $domain = 'https://api.heyloyalty.com';
     public function __construct($key, $secret)
     {
-        $password = base64_encode(hash_hmac('sha256', @$requestTimestamp, $secret));
+        $requestTimestamp = gmdate('D, d M Y H:i:s T', time());
+        $password = base64_encode(hash_hmac('sha256', $requestTimestamp, $secret));
         $signature = base64_encode($key.':'.$password);
         $this->headers = [
-            "authorization: Basic " . $signature . "",
-            "x-request-timestamp: " . $requestTimestamp. "",
+            "Authorization: Basic " . $signature . "",
+            "X-Request-Timestamp: " . $requestTimestamp. "",
         ];
     }
 
     public function getLists()
     {
-        $response = $this->callHL('GET', 'https://api.heyloyalty.com/loyalty/v1/lists/');
+        $response = $this->callHL('GET', $this->domain . '/loyalty/v1/lists');
         return json_decode($response['response'], true);
     }
 
     public function addMember($listId, $params)
     {
         return $this->callHL('POST',
-            'https://api.heyloyalty.com/loyalty/v1/lists/' . $listId . '/members',
+            $this->domain . '/loyalty/v1/lists/' . $listId . '/members',
             $params);
     }
 
@@ -31,7 +33,7 @@ class HeyLoyaltyAPI
         $filter = ['filter' => ['email' => ['eq' => [$email]]]];
         $response = $this->callHL(
             'GET',
-            'https://api.heyloyalty.com/loyalty/v1/lists/' . $listId . '/members',
+            $this->domain . '/loyalty/v1/lists/' . $listId . '/members',
             $filter);
         return json_decode($response['response'], true);
     }
@@ -40,7 +42,7 @@ class HeyLoyaltyAPI
     {
         return $this->callHL(
             'PUT',
-            'https://api.heyloyalty.com/loyalty/v1/lists/' . $listId . '/members/' . $memberId,
+            $this->domain . '/loyalty/v1/lists/' . $listId . '/members/' . $memberId,
             $member);
     }
 
